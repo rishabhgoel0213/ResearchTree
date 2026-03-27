@@ -2,3 +2,5 @@ artifacts/
 worktrees/
 __pycache__/
 data/
+.pixi/
+parameter-golf/.treegit/
