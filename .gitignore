@@ -1,0 +1,4 @@
+artifacts/
+worktrees/
+__pycache__/
+data/
