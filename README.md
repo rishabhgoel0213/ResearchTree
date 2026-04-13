@@ -120,6 +120,12 @@ Both configs assume:
 - the Codex TreeGit policy script exists at the configured absolute path
 - candidate branches are created under `worktrees/`
 
+## Example Search Result
+
+This plot shows one best-branch lineage improving `val_bpb` over 63 search steps, from `1.9604` down to `0.9352`.
+
+![Best-branch lineage example](plot.png)
+
 ## Related Docs
 
 - [`parameter-golf/README.md`](parameter-golf/README.md): challenge context and baseline repo usage
