@@ -94,7 +94,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Path to the FineWeb dataset directory used by the 1xH100 command. "
-            "Defaults to <repo_root>/../data/datasets/fineweb10B_sp1024."
+            "Defaults to the nearest available data/datasets/fineweb10B_sp1024 near the repo root or example root."
         ),
     )
     parser.add_argument(
@@ -103,7 +103,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Path to the SentencePiece tokenizer model used by the 1xH100 command. "
-            "Defaults to <repo_root>/../data/tokenizers/fineweb_1024_bpe.model."
+            "Defaults to the nearest available data/tokenizers/fineweb_1024_bpe.model near the repo root or example root."
         ),
     )
     parser.add_argument(
@@ -168,9 +168,7 @@ def build_config(args: argparse.Namespace) -> ScoreConfig:
     pixi_root = SCRIPT_ROOT
     if not (pixi_root / "pixi.toml").exists():
         raise FileNotFoundError(f"Global pixi manifest not found: {pixi_root / 'pixi.toml'}")
-    data_root = repo_root / "data"
-    if not data_root.exists():
-        data_root = repo_root.parent / "data"
+    data_root = _resolve_data_root(repo_root)
 
     return ScoreConfig(
         repo_root=repo_root,
@@ -189,6 +187,24 @@ def build_config(args: argparse.Namespace) -> ScoreConfig:
         ).resolve(),
         output_root=(args.output_root if args.output_root is not None else repo_root / "score_runs").resolve(),
     )
+
+
+def _resolve_data_root(repo_root: Path) -> Path:
+    candidates: list[Path] = []
+    for candidate in [
+        repo_root / "data",
+        repo_root.parent / "data",
+        repo_root.parent.parent / "data",
+        SCRIPT_ROOT / "data",
+        SCRIPT_ROOT.parent / "data",
+    ]:
+        resolved = candidate.resolve()
+        if resolved not in candidates:
+            candidates.append(resolved)
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
 
 
 def make_run_id(explicit_run_id: str | None) -> str:

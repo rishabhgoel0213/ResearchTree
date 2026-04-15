@@ -4,6 +4,9 @@
 			"path": ".."
 		},
 		{
+			"path": "../../parameter_golf"
+		},
+		{
 			"path": "../../treegit"
 		}
 	],

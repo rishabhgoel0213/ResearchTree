@@ -1,6 +1,9 @@
 artifacts/
+smoke-artifacts/
 worktrees/
+smoke-worktrees/
 __pycache__/
 data/
 .pixi/
 parameter-golf/.treegit/
+parameter_golf/.treegit/

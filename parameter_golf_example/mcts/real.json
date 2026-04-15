@@ -1,7 +1,7 @@
 {
   "root_branch": "root",
-  "worktree_root": "../worktrees/",
-  "artifact_root": "../artifacts/",
+  "worktree_root": "../parameter_golf_example/worktrees",
+  "artifact_root": "../parameter_golf_example/artifacts",
   "branch_prefix": "mcts",
   "expansion_width": 5,
   "selection": {
@@ -11,7 +11,7 @@
   "expander": {
     "command": [
       "python3",
-      "/home/r1shabhg/treegit/src/treegit/policies/codex.py",
+      "../../../treegit/src/treegit/policies/codex.py",
       "--tmux",
       "--tmux-session-prefix",
       "pg-mcts",
@@ -23,7 +23,7 @@
       "--cleanup-path",
       ".pytest_cache",
       "--prompt-file",
-      "/home/r1shabhg/researchtree/mcts/prompt.md"
+      "../../mcts/prompt.md"
     ],
     "commit_message_template": "mcts expand {parent_branch} -> {branch}"
   },
@@ -32,18 +32,18 @@
     "version": "v1-real",
     "command": [
       "python3",
-      "/home/r1shabhg/researchtree/objectives/parameter_golf_objective.py",
+      "../../objectives/parameter_golf_objective.py",
       "{worktree}",
       "--objective-version",
       "v1-real",
       "--output-root",
       "{artifact_root}",
       "--score-script",
-      "/home/r1shabhg/researchtree/score.py",
+      "../../score.py",
       "--data-path",
-      "/home/r1shabhg/researchtree/data/datasets/fineweb10B_sp1024",
+      "../../../data/datasets/fineweb10B_sp1024",
       "--tokenizer-path",
-      "/home/r1shabhg/researchtree/data/tokenizers/fineweb_1024_bpe.model",
+      "../../../data/tokenizers/fineweb_1024_bpe.model",
       "--env",
       "ITERATIONS=200",
       "--env",
