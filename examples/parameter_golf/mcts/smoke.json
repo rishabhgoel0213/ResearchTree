@@ -1,7 +1,7 @@
 {
   "root_branch": "root",
-  "worktree_root": "../parameter_golf_example/smoke-worktrees",
-  "artifact_root": "../parameter_golf_example/smoke-artifacts",
+  "worktree_root": "../smoke-worktrees",
+  "artifact_root": "../smoke-artifacts",
   "branch_prefix": "mcts",
   "expansion_width": 2,
   "selection": {
@@ -11,7 +11,7 @@
   "expander": {
     "command": [
       "python3",
-      "../../../treegit/src/treegit/policies/codex.py",
+      "../../../../treegit/src/treegit/policies/codex.py",
       "--tmux",
       "--tmux-session-prefix",
       "pg-mcts",
@@ -41,9 +41,9 @@
       "--score-script",
       "../../score.py",
       "--data-path",
-      "../../../data/datasets/fineweb10B_sp1024",
+      "../../../../data/datasets/fineweb10B_sp1024",
       "--tokenizer-path",
-      "../../../data/tokenizers/fineweb_1024_bpe.model",
+      "../../../../data/tokenizers/fineweb_1024_bpe.model",
       "--env",
       "ITERATIONS=2",
       "--env",

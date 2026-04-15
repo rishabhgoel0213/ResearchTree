@@ -191,16 +191,12 @@ def build_config(args: argparse.Namespace) -> ScoreConfig:
 
 def _resolve_data_root(repo_root: Path) -> Path:
     candidates: list[Path] = []
-    for candidate in [
-        repo_root / "data",
-        repo_root.parent / "data",
-        repo_root.parent.parent / "data",
-        SCRIPT_ROOT / "data",
-        SCRIPT_ROOT.parent / "data",
-    ]:
-        resolved = candidate.resolve()
-        if resolved not in candidates:
-            candidates.append(resolved)
+    for start in [repo_root, SCRIPT_ROOT]:
+        current = start.resolve()
+        for parent in [current, *current.parents]:
+            candidate = (parent / "data").resolve()
+            if candidate not in candidates:
+                candidates.append(candidate)
     for candidate in candidates:
         if candidate.exists():
             return candidate

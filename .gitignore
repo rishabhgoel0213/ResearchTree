@@ -2,8 +2,11 @@ artifacts/
 smoke-artifacts/
 worktrees/
 smoke-worktrees/
+examples/parameter_golf/artifacts/
+examples/parameter_golf/smoke-artifacts/
+examples/parameter_golf/worktrees/
+examples/parameter_golf/smoke-worktrees/
 __pycache__/
 data/
 .pixi/
-parameter-golf/.treegit/
-parameter_golf/.treegit/
+examples/parameter_golf/parameter_golf/.treegit/
