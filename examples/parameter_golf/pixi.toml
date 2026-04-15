@@ -21,4 +21,4 @@ sentencepiece = "*"
 [tasks]
 check-python = "python -c \"import os, sysconfig; inc = sysconfig.get_paths()['include']; print(inc); print('Python.h:', os.path.exists(os.path.join(inc, 'Python.h')))\""
 download-data = "python data/cached_challenge_fineweb.py --variant sp1024"
-train = "torchrun --standalone --nproc_per_node=1 train_gpt.py"
+train = "torchrun --standalone --nproc_per_node=1 src/train_gpt.py"

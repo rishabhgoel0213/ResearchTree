@@ -2,7 +2,3 @@
 	path = treegit
 	url = https://github.com/rishabhgoel0213/treegit.git
 	branch = master
-[submodule "parameter_golf"]
-	path = examples/parameter_golf/parameter_golf
-	url = https://github.com/openai/parameter-golf.git
-	branch = main

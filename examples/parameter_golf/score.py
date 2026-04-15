@@ -94,7 +94,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Path to the FineWeb dataset directory used by the 1xH100 command. "
-            "Defaults to the nearest available data/datasets/fineweb10B_sp1024 near the repo root or example root."
+            "Defaults to examples/parameter_golf/data/datasets/fineweb10B_sp1024."
         ),
     )
     parser.add_argument(
@@ -103,7 +103,7 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help=(
             "Path to the SentencePiece tokenizer model used by the 1xH100 command. "
-            "Defaults to the nearest available data/tokenizers/fineweb_1024_bpe.model near the repo root or example root."
+            "Defaults to examples/parameter_golf/data/tokenizers/fineweb_1024_bpe.model."
         ),
     )
     parser.add_argument(
@@ -190,17 +190,11 @@ def build_config(args: argparse.Namespace) -> ScoreConfig:
 
 
 def _resolve_data_root(repo_root: Path) -> Path:
-    candidates: list[Path] = []
-    for start in [repo_root, SCRIPT_ROOT]:
-        current = start.resolve()
-        for parent in [current, *current.parents]:
-            candidate = (parent / "data").resolve()
-            if candidate not in candidates:
-                candidates.append(candidate)
-    for candidate in candidates:
+    for candidate in [repo_root / "data", SCRIPT_ROOT / "data"]:
+        candidate = candidate.resolve()
         if candidate.exists():
             return candidate
-    return candidates[0]
+    return (SCRIPT_ROOT / "data").resolve()
 
 
 def make_run_id(explicit_run_id: str | None) -> str:

@@ -1,12 +1,14 @@
 # Parameter Golf Example
 
-This directory is one concrete example of how to wire this repository around OpenAI's Parameter Golf challenge. The canonical challenge repo now lives in the nested [`parameter_golf/`](./parameter_golf/) submodule, and TreeGit lives in the root-level [`../../treegit/`](../../treegit/) submodule.
+This directory is one concrete example of how to wire this repository around OpenAI's Parameter Golf challenge. The baseline source now lives in [`src/`](./src/), and TreeGit lives in the root-level [`../../treegit/`](../../treegit/) submodule.
 
-If you want the challenge rules and baseline training details, start with [`./parameter_golf/README.md`](./parameter_golf/README.md). This README only documents the example harness.
+If you want the local baseline context, start with [`./src/README.md`](./src/README.md). This README only documents the example harness.
 
 ## Layout
 
 - `score.py`: train-and-score entrypoint for a candidate repo or TreeGit worktree
+- `src/`: trimmed vendored Parameter Golf baseline used as the TreeGit root
+- `data/`: local cached FineWeb download helper and downloaded tokenizer/dataset artifacts
 - `objectives/parameter_golf_objective.py`: JSON objective wrapper used by TreeGit
 - `mcts/smoke.json`: cheaper search config for wiring checks
 - `mcts/real.json`: longer-running search config
@@ -19,8 +21,8 @@ If you want the challenge rules and baseline training details, start with [`./pa
 
 - Linux
 - `pixi`
-- the root repo cloned with submodules
-- FineWeb data and tokenizer assets under `../../data/`, or explicit `--data-path` and `--tokenizer-path` overrides
+- the root repo cloned with the `treegit` submodule
+- FineWeb data and tokenizer assets under `./data/`, or explicit `--data-path` and `--tokenizer-path` overrides
 
 ## Quick Start
 
@@ -29,13 +31,14 @@ Create the example environment:
 ```bash
 cd examples/parameter_golf
 pixi install
+pixi run download-data
 ```
 
-Run a cheap training-and-score pass against the nested `parameter_golf` submodule:
+Run a cheap training-and-score pass against the vendored `src/` baseline:
 
 ```bash
 cd examples/parameter_golf
-pixi run python score.py ./parameter_golf \
+pixi run python score.py ./src \
   --run-id baseline_smoke \
   --env ITERATIONS=2 \
   --env WARMUP_STEPS=0 \
@@ -51,7 +54,7 @@ Score one of the preserved example logs without launching training:
 
 ```bash
 cd examples/parameter_golf
-pixi run python score.py ./parameter_golf \
+pixi run python score.py ./src \
   --log-file ./test_runs/test_20260322_233131/logs/test_20260322_233131.txt
 ```
 
@@ -59,7 +62,7 @@ Run the JSON objective wrapper directly:
 
 ```bash
 cd examples/parameter_golf
-pixi run python objectives/parameter_golf_objective.py ./parameter_golf \
+pixi run python objectives/parameter_golf_objective.py ./src \
   --objective-version manual-smoke \
   --output-root ./artifacts/manual-smoke \
   --env ITERATIONS=2 \
@@ -70,10 +73,10 @@ pixi run python objectives/parameter_golf_objective.py ./parameter_golf \
 
 ## TreeGit Wiring
 
-Run TreeGit from inside the nested `parameter_golf/` submodule and point it at the configs in this directory:
+Run TreeGit from inside the vendored `src/` tree and point it at the configs in this directory:
 
 ```bash
-cd examples/parameter_golf/parameter_golf
+cd examples/parameter_golf/src
 python3 ../../../treegit/src/treegit/cli.py init
 python3 ../../../treegit/src/treegit/cli.py mcts init --config ../mcts/smoke.json
 ```
@@ -82,7 +85,7 @@ The checked-in configs assume:
 
 - candidate worktrees are created under `examples/parameter_golf/worktrees/` or `examples/parameter_golf/smoke-worktrees/`
 - run artifacts are written under `examples/parameter_golf/artifacts/` or `examples/parameter_golf/smoke-artifacts/`
-- the shared dataset cache lives at the repo-root `data/` directory
+- the local dataset cache lives at `examples/parameter_golf/data/`
 
 ## How Scoring Works
 
@@ -95,7 +98,7 @@ When launching training, the scorer:
 
 - treats the positional argument as the candidate repo root
 - defaults the train script to `<repo_root>/train_gpt.py`
-- searches for `data/` near the candidate repo, then near this example, then at the repo root
+- first checks `<repo_root>/data/`, then falls back to this example's `data/`
 - writes run outputs under `<repo_root>/score_runs/` unless you override `--output-root` or `--run-dir`
 
 The final score is a weighted sum of `val_bpb`, `val_loss`, and total submission size in bytes, with hard penalties if the submission exceeds the artifact or line caps.
