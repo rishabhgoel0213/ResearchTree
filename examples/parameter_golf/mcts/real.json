@@ -31,7 +31,11 @@
     "id": "parameter_golf",
     "version": "v1-real",
     "command": [
-      "python3",
+      "pixi",
+      "run",
+      "--manifest-path",
+      "../../pixi.toml",
+      "python",
       "../../objectives/parameter_golf_objective.py",
       "{worktree}",
       "--objective-version",

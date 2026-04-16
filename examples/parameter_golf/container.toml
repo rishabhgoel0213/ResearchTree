@@ -1,0 +1,28 @@
+schema = 1
+name = "parameter_golf"
+
+[image]
+base = "nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04"
+platform = "linux/amd64"
+
+[project]
+workdir = "."
+default_command = ["bash"]
+
+[runtime]
+docker_args = ["--gpus=all", "--ipc=host"]
+env = { PYTHONPATH = "/workspace/treegit/src" }
+
+[[runtime.mounts]]
+source = "data"
+target = "data"
+
+[[setup]]
+name = "install-env"
+run = "pixi install --locked"
+once = ".container_state/install-env.done"
+
+[[setup]]
+name = "download-data"
+run = "pixi run download-data"
+once = ".container_state/download-data.done"

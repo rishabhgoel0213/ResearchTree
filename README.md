@@ -47,3 +47,53 @@ The runnable examples in this repo live under `examples/`. Start there for the s
 
 - [`examples/parameter_golf/README.md`](examples/parameter_golf/README.md)
 - [`examples/synthetic_regression/README.md`](examples/synthetic_regression/README.md)
+
+## Containers
+
+This repo now includes a first-pass container workflow driven by a `container.toml` in each example directory.
+
+- shared image logic lives in `docker/Dockerfile`
+- the host-side launcher lives in `scripts/container.py`
+- each example declares its runtime in `examples/*/container.toml`
+
+The current model is intentionally simple:
+
+- the repo is copied into a per-example Docker workspace volume at launch time
+- only explicitly configured large directories are bind-mounted from the host into that copied workspace
+- the container home directory is also kept in a Docker volume, while host `~/.codex/` is mounted into it for auth/config reuse
+- each example's `.pixi/` directory is overlaid with a Docker volume so Pixi environments stay on a Linux filesystem
+- OS-level tools such as `git`, `tmux`, `python3`, and `pixi` come from the shared image
+- Codex CLI itself is installed in the shared image
+- Python/package dependencies still come from each example's `pixi.toml`
+- example-local setup hooks such as `pixi run download-data` come from `container.toml`
+
+Build the image for an example:
+
+```bash
+python3 scripts/container.py build synthetic_regression
+```
+
+Run an example shell after any configured setup steps:
+
+```bash
+python3 scripts/container.py shell synthetic_regression
+```
+
+Run a specific command inside the example container:
+
+```bash
+python3 scripts/container.py run synthetic_regression -- \
+  pixi run python score.py ./src --json
+```
+
+Prepare the Parameter Golf container and data cache:
+
+```bash
+python3 scripts/container.py run parameter_golf --setup-only
+```
+
+The container workspace is disposable and isolated from the host checkout, so generated `.treegit/`, worktrees, artifacts, and similar churn stay inside Docker-managed volumes instead of showing up in the base repository.
+
+The checked-in example configs pin `platform = "linux/amd64"` because the current Pixi manifests target `linux-64`.
+
+One current limitation is that the checked-in MCTS configs still expect a `codex` binary for the expander policy. The container wiring added here does not install Codex CLI yet, so scoring/setup flows are covered immediately, but the Codex-driven MCTS path still needs that tool added separately.

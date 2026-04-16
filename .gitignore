@@ -16,6 +16,10 @@ examples/parameter_golf/data/__pycache__/
 /__pycache__/
 /data/
 /.pixi/
+/.container/
+.DS_Store
+examples/parameter_golf/.container_state/
+examples/synthetic_regression/.container_state/
 examples/parameter_golf/mcts/__pycache__/
 examples/parameter_golf/objectives/__pycache__/
 examples/parameter_golf/src/.treegit/
@@ -23,7 +27,9 @@ examples/parameter_golf/src/score_runs/
 examples/parameter_golf/src/__pycache__/
 examples/parameter_golf/src/.pytest_cache/
 examples/synthetic_regression/artifacts/
+examples/synthetic_regression/container-smoke-artifacts/
 examples/synthetic_regression/smoke-artifacts/
+examples/synthetic_regression/container-smoke-worktrees/
 examples/synthetic_regression/worktrees/
 examples/synthetic_regression/smoke-worktrees/
 examples/synthetic_regression/__pycache__/

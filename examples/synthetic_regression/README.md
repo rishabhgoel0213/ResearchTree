@@ -53,6 +53,7 @@ Run TreeGit from inside `src/`:
 ```bash
 cd examples/synthetic_regression/src
 python3 ../../../treegit/src/treegit/cli.py init
+python3 ../../../treegit/src/treegit/cli.py commit -m "baseline snapshot"
 python3 ../../../treegit/src/treegit/cli.py mcts init --config ../mcts/smoke.json
 ```
 

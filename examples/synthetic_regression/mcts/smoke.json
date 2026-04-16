@@ -31,7 +31,11 @@
     "id": "synthetic_regression",
     "version": "v1-smoke",
     "command": [
-      "python3",
+      "pixi",
+      "run",
+      "--manifest-path",
+      "../../pixi.toml",
+      "python",
       "../../objectives/synthetic_regression_objective.py",
       "{worktree}",
       "--objective-version",

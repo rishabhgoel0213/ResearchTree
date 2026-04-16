@@ -1,9 +1,9 @@
 {
   "root_branch": "root",
-  "worktree_root": "../worktrees",
-  "artifact_root": "../artifacts",
-  "branch_prefix": "mcts",
-  "expansion_width": 4,
+  "worktree_root": "../container-smoke-worktrees",
+  "artifact_root": "../container-smoke-artifacts",
+  "branch_prefix": "container-smoke",
+  "expansion_width": 1,
   "selection": {
     "policy": "uct",
     "exploration_constant": 1.4
@@ -14,7 +14,7 @@
       "../../../../treegit/src/treegit/policies/codex.py",
       "--tmux",
       "--tmux-session-prefix",
-      "sr-mcts",
+      "sr-container-smoke",
       "--unsafe",
       "--cleanup-path",
       "__pycache__",
@@ -25,11 +25,11 @@
       "--prompt-file",
       "../../mcts/prompt.md"
     ],
-    "commit_message_template": "mcts expand {parent_branch} -> {branch}"
+    "commit_message_template": "container smoke expand {parent_branch} -> {branch}"
   },
   "objective": {
     "id": "synthetic_regression",
-    "version": "v1-real",
+    "version": "v1-container-smoke",
     "command": [
       "pixi",
       "run",
@@ -39,13 +39,13 @@
       "../../objectives/synthetic_regression_objective.py",
       "{worktree}",
       "--objective-version",
-      "v1-real",
+      "v1-container-smoke",
       "--output-root",
       "{artifact_root}",
       "--score-script",
       "../../score.py",
       "--env",
-      "ITERATIONS=300"
+      "ITERATIONS=40"
     ],
     "default_direction": "minimize"
   }

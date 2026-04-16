@@ -1,0 +1,18 @@
+schema = 1
+name = "synthetic_regression"
+
+[image]
+base = "ubuntu:22.04"
+platform = "linux/amd64"
+
+[project]
+workdir = "."
+default_command = ["bash"]
+
+[runtime]
+env = { PYTHONPATH = "/workspace/treegit/src" }
+
+[[setup]]
+name = "install-env"
+run = "pixi install --locked"
+once = ".container_state/install-env.done"

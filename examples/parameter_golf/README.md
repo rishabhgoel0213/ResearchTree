@@ -89,6 +89,7 @@ Run TreeGit from inside `src/` and point it at the configs in this directory:
 ```bash
 cd examples/parameter_golf/src
 python3 ../../../treegit/src/treegit/cli.py init
+python3 ../../../treegit/src/treegit/cli.py commit -m "baseline snapshot"
 python3 ../../../treegit/src/treegit/cli.py mcts init --config ../mcts/smoke.json
 ```
 
