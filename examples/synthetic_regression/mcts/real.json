@@ -1,0 +1,48 @@
+{
+  "root_branch": "root",
+  "worktree_root": "../worktrees",
+  "artifact_root": "../artifacts",
+  "branch_prefix": "mcts",
+  "expansion_width": 4,
+  "selection": {
+    "policy": "uct",
+    "exploration_constant": 1.4
+  },
+  "expander": {
+    "command": [
+      "python3",
+      "../../../../treegit/src/treegit/policies/codex.py",
+      "--tmux",
+      "--tmux-session-prefix",
+      "sr-mcts",
+      "--unsafe",
+      "--cleanup-path",
+      "__pycache__",
+      "--cleanup-path",
+      "score_runs",
+      "--cleanup-path",
+      ".pytest_cache",
+      "--prompt-file",
+      "../../mcts/prompt.md"
+    ],
+    "commit_message_template": "mcts expand {parent_branch} -> {branch}"
+  },
+  "objective": {
+    "id": "synthetic_regression",
+    "version": "v1-real",
+    "command": [
+      "python3",
+      "../../objectives/synthetic_regression_objective.py",
+      "{worktree}",
+      "--objective-version",
+      "v1-real",
+      "--output-root",
+      "{artifact_root}",
+      "--score-script",
+      "../../score.py",
+      "--env",
+      "ITERATIONS=300"
+    ],
+    "default_direction": "minimize"
+  }
+}

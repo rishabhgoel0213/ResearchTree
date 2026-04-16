@@ -22,3 +22,14 @@ examples/parameter_golf/src/.treegit/
 examples/parameter_golf/src/score_runs/
 examples/parameter_golf/src/__pycache__/
 examples/parameter_golf/src/.pytest_cache/
+examples/synthetic_regression/artifacts/
+examples/synthetic_regression/smoke-artifacts/
+examples/synthetic_regression/worktrees/
+examples/synthetic_regression/smoke-worktrees/
+examples/synthetic_regression/__pycache__/
+examples/synthetic_regression/mcts/__pycache__/
+examples/synthetic_regression/objectives/__pycache__/
+examples/synthetic_regression/src/.treegit/
+examples/synthetic_regression/src/score_runs/
+examples/synthetic_regression/src/__pycache__/
+examples/synthetic_regression/src/.pytest_cache/

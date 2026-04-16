@@ -1,0 +1,4 @@
+__pycache__/
+.treegit/
+.pytest_cache/
+score_runs/

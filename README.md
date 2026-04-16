@@ -14,6 +14,7 @@ The goal is not just to train one model once. The goal is to support repeated se
 ## Layout
 
 - [`examples/parameter_golf/`](examples/parameter_golf/): end-to-end example of this workflow for Parameter Golf
+- [`examples/synthetic_regression/`](examples/synthetic_regression/): fast synthetic example for cheap search iterations
 - [`treegit/`](treegit/): TreeGit checkout used to manage search branches and worktrees
 
 ## Search Loop
@@ -42,6 +43,7 @@ git submodule update --init --recursive
 
 ## Usage
 
-The concrete example in this repo lives under [`examples/parameter_golf/`](examples/parameter_golf/). Start there for the scorer, objective wrapper, local data bootstrap, MCTS configs, and usage notes:
+The runnable examples in this repo live under `examples/`. Start there for the scorer, objective wrapper, MCTS configs, and usage notes:
 
 - [`examples/parameter_golf/README.md`](examples/parameter_golf/README.md)
+- [`examples/synthetic_regression/README.md`](examples/synthetic_regression/README.md)
