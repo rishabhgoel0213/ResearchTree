@@ -1,13 +1,24 @@
 # Parameter Golf Example
 
-This directory is one concrete example of how to wire this repository around OpenAI's Parameter Golf challenge. The baseline source now lives in [`src/`](./src/), and TreeGit lives in the root-level [`../../treegit/`](../../treegit/) submodule.
+This example applies ResearchTree to OpenAI's Parameter Golf challenge.
 
-If you want the local baseline context, start with [`./src/README.md`](./src/README.md). This README only documents the example harness.
+The working idea is simple: keep a baseline implementation in [`src/`](./src/), use TreeGit to produce descendants, and score those descendants with a repeatable local proxy before deciding which branches deserve more search.
+
+If you want the baseline source context, start with [`./src/README.md`](./src/README.md). This README focuses on the example harness around it.
+
+## Goal
+
+The goal of this example is to make iterative model-search practical:
+
+- baseline code lives in one stable place
+- candidate edits are made in isolated worktrees
+- every candidate is evaluated with the same scoring logic
+- artifacts are kept in predictable locations for later comparison
 
 ## Layout
 
 - `score.py`: train-and-score entrypoint for a candidate repo or TreeGit worktree
-- `src/`: trimmed vendored Parameter Golf baseline used as the TreeGit root
+- `src/`: baseline source used as the TreeGit root
 - `data/`: local cached FineWeb download helper and downloaded tokenizer/dataset artifacts
 - `objectives/parameter_golf_objective.py`: JSON objective wrapper used by TreeGit
 - `mcts/smoke.json`: cheaper search config for wiring checks
@@ -26,7 +37,7 @@ If you want the local baseline context, start with [`./src/README.md`](./src/REA
 
 ## Quick Start
 
-Create the example environment:
+Set up the example environment and local data cache:
 
 ```bash
 cd examples/parameter_golf
@@ -34,7 +45,7 @@ pixi install
 pixi run download-data
 ```
 
-Run a cheap training-and-score pass against the vendored `src/` baseline:
+Run a cheap score pass against the baseline:
 
 ```bash
 cd examples/parameter_golf
@@ -50,7 +61,7 @@ pixi run python score.py ./src \
   --env MUON_BACKEND_STEPS=1
 ```
 
-Score one of the preserved example logs without launching training:
+Or score an existing run log:
 
 ```bash
 cd examples/parameter_golf
@@ -58,7 +69,7 @@ pixi run python score.py ./src \
   --log-file ./test_runs/test_20260322_233131/logs/test_20260322_233131.txt
 ```
 
-Run the JSON objective wrapper directly:
+The objective wrapper is what TreeGit uses during search:
 
 ```bash
 cd examples/parameter_golf
@@ -73,7 +84,7 @@ pixi run python objectives/parameter_golf_objective.py ./src \
 
 ## TreeGit Wiring
 
-Run TreeGit from inside the vendored `src/` tree and point it at the configs in this directory:
+Run TreeGit from inside `src/` and point it at the configs in this directory:
 
 ```bash
 cd examples/parameter_golf/src
@@ -101,7 +112,7 @@ When launching training, the scorer:
 - first checks `<repo_root>/data/`, then falls back to this example's `data/`
 - writes run outputs under `<repo_root>/score_runs/` unless you override `--output-root` or `--run-dir`
 
-The final score is a weighted sum of `val_bpb`, `val_loss`, and total submission size in bytes, with hard penalties if the submission exceeds the artifact or line caps.
+The final score is a weighted sum of `val_bpb`, `val_loss`, and total submission size in bytes, with hard penalties if the submission exceeds the artifact or line caps. Lower is better.
 
 ## Example Search Result
 
