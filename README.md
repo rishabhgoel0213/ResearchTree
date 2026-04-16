@@ -96,4 +96,4 @@ The container workspace is disposable and isolated from the host checkout, so ge
 
 The checked-in example configs pin `platform = "linux/amd64"` because the current Pixi manifests target `linux-64`.
 
-One current limitation is that the checked-in MCTS configs still expect a `codex` binary for the expander policy. The container wiring added here does not install Codex CLI yet, so scoring/setup flows are covered immediately, but the Codex-driven MCTS path still needs that tool added separately.
+Codex CLI is installed in the shared image, and the launcher mounts host `~/.codex/` into the container so authenticated Codex-driven MCTS runs can work inside the container as well.
