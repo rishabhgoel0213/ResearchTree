@@ -3,10 +3,13 @@
   "worktree_root": "../worktrees",
   "artifact_root": "../artifacts",
   "branch_prefix": "mcts",
-  "expansion_width": 4,
+  "iteration_budget": 4,
   "selection": {
-    "policy": "uct",
-    "exploration_constant": 1.4
+    "policy": "ucb_budgeted",
+    "exploration_constant": 1.4,
+    "widening_coefficient": 2.0,
+    "widening_exponent": 0.5,
+    "virtual_loss": 1.0
   },
   "expander": {
     "command": [
