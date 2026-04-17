@@ -1,6 +1,6 @@
 # ResearchTree
 
-ResearchTree is a local search harness for running structured experimentation against compact-model training objectives.
+ResearchTree is a framework for systematically exploring and improving AI research ideas through structured search and experimentation.
 
 The immediate use case in this repository is OpenAI's Parameter Golf challenge: start from a known baseline, generate modified descendants with TreeGit, score them with a consistent local proxy, and keep artifacts and worktrees organized enough to run many iterations.
 
