@@ -35,6 +35,14 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - \
 
 RUN curl -fsSL https://pixi.sh/install.sh | sh
 
+RUN printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'set -euo pipefail' \
+    'export PYTHONPATH="/workspace/treegit/src${PYTHONPATH:+:$PYTHONPATH}"' \
+    'exec python3 -m treegit "$@"' \
+    > /usr/local/bin/treegit \
+    && chmod +x /usr/local/bin/treegit
+
 WORKDIR /workspace
 
 CMD ["bash"]

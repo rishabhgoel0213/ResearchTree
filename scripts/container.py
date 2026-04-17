@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -49,6 +50,11 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--rebuild", action="store_true", help="Rebuild the image before running.")
     run_parser.add_argument("--skip-build", action="store_true", help="Skip image build checks.")
     run_parser.add_argument(
+        "--fresh",
+        action="store_true",
+        help="Recreate the managed container from a fresh workspace snapshot before running.",
+    )
+    run_parser.add_argument(
         "--setup-only",
         action="store_true",
         help="Run configured setup steps and exit without launching the default command.",
@@ -59,6 +65,31 @@ def build_parser() -> argparse.ArgumentParser:
     _add_example_argument(shell_parser)
     shell_parser.add_argument("--rebuild", action="store_true", help="Rebuild the image before running.")
     shell_parser.add_argument("--skip-build", action="store_true", help="Skip image build checks.")
+    shell_parser.add_argument(
+        "--fresh",
+        action="store_true",
+        help="Recreate the managed container from a fresh workspace snapshot before opening the shell.",
+    )
+
+    treegit_parser = subparsers.add_parser(
+        "treegit",
+        help="Run a treegit command in the example's src/ directory inside the container.",
+    )
+    _add_example_argument(treegit_parser)
+    treegit_parser.add_argument("--rebuild", action="store_true", help="Rebuild the image before running.")
+    treegit_parser.add_argument("--skip-build", action="store_true", help="Skip image build checks.")
+    treegit_parser.add_argument(
+        "--fresh",
+        action="store_true",
+        help="Recreate the managed container from a fresh workspace snapshot before running treegit.",
+    )
+    treegit_parser.add_argument("treegit_args", nargs=argparse.REMAINDER)
+
+    stop_parser = subparsers.add_parser(
+        "stop",
+        help="Stop and remove the managed container for an example, preserving named volumes.",
+    )
+    _add_example_argument(stop_parser)
 
     return parser
 
@@ -74,6 +105,10 @@ def main(argv: list[str] | None = None) -> int:
     spec = load_container_spec(config_path, REPO_ROOT)
     image_tag = image_tag_for_spec(spec)
 
+    if args.command == "stop":
+        stop_container(spec)
+        return 0
+
     if args.command == "build":
         build_image(spec, image_tag=image_tag, rebuild=args.rebuild)
         print(image_tag)
@@ -83,7 +118,21 @@ def main(argv: list[str] | None = None) -> int:
         build_image(spec, image_tag=image_tag, rebuild=getattr(args, "rebuild", False))
 
     if args.command == "shell":
-        return run_container(spec, image_tag=image_tag, override_command=["bash"])
+        return run_container(
+            spec,
+            image_tag=image_tag,
+            override_command=["bash"],
+            fresh=args.fresh,
+        )
+
+    if args.command == "treegit":
+        treegit_args, fresh_override = _normalize_treegit_args(args.treegit_args)
+        return run_container(
+            spec,
+            image_tag=image_tag,
+            override_command=_treegit_override_command(spec, treegit_args),
+            fresh=args.fresh or fresh_override,
+        )
 
     override_command = _normalize_override_command(args.container_command)
     return run_container(
@@ -91,6 +140,7 @@ def main(argv: list[str] | None = None) -> int:
         image_tag=image_tag,
         override_command=override_command,
         setup_only=args.setup_only,
+        fresh=args.fresh,
     )
 
 
@@ -124,7 +174,68 @@ def run_container(
     image_tag: str,
     override_command: list[str] | None = None,
     setup_only: bool = False,
+    fresh: bool = False,
 ) -> int:
+    container_name = ensure_container_running(spec, image_tag=image_tag, fresh=fresh)
+
+    command = ["docker", "exec"]
+    if sys.stdin.isatty() and sys.stdout.isatty():
+        command.extend(["-it"])
+    command.append(container_name)
+    command.extend(["python3", str(DEFAULT_IN_CONTAINER_SCRIPT), str(spec.container_config_path)])
+    if setup_only:
+        command.append("--setup-only")
+    if override_command is not None:
+        command.append("--")
+        command.extend(override_command)
+
+    print(f"[container] running {spec.name} in {image_tag}")
+    completed = subprocess.run(command, check=False)
+    return completed.returncode
+
+
+def image_exists(image_tag: str) -> bool:
+    completed = subprocess.run(
+        ["docker", "image", "inspect", image_tag],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return completed.returncode == 0
+
+
+def ensure_container_running(spec, *, image_tag: str, fresh: bool) -> str:
+    container_name = container_name_for_spec(spec)
+    if fresh:
+        remove_container(spec)
+
+    status = inspect_container(container_name)
+    desired_image_id = image_id(image_tag)
+    if status is not None and desired_image_id is not None and status["image_id"] != desired_image_id:
+        remove_container(spec)
+        status = None
+
+    if status is None:
+        create_container(spec, image_tag=image_tag, container_name=container_name)
+        subprocess.run(
+            ["docker", "start", container_name],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+        )
+        return container_name
+
+    if status["state"] != "running":
+        subprocess.run(
+            ["docker", "start", container_name],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+        )
+    return container_name
+
+
+def create_container(spec, *, image_tag: str, container_name: str) -> None:
     workspace_volume = f"researchtree-{spec.slug}-workspace"
     home_volume = f"researchtree-{spec.slug}-home"
     pixi_volume = f"researchtree-{spec.slug}-pixi"
@@ -134,11 +245,9 @@ def run_container(
     ensure_volume_permissions(spec, image_tag=image_tag, volume_name=pixi_volume)
     ensure_volume_permissions(spec, image_tag=image_tag, volume_name=state_volume)
 
-    command = ["docker", "run", "--rm", "--init"]
+    command = ["docker", "create", "--name", container_name, "--init"]
     if spec.image.platform:
         command.extend(["--platform", spec.image.platform])
-    if sys.stdin.isatty() and sys.stdout.isatty():
-        command.extend(["-it"])
     command.extend(["-v", f"{workspace_volume}:{WORKSPACE_ROOT}"])
     command.extend(["-v", f"{home_volume}:/home/researchtree"])
     command.extend(["-v", f"{pixi_volume}:{spec.container_example_dir / '.pixi'}"])
@@ -164,26 +273,64 @@ def run_container(
         command.extend(["-e", f"{key}={value}"])
     command.extend(spec.runtime.docker_args)
     command.append(image_tag)
-    command.extend(["python3", str(DEFAULT_IN_CONTAINER_SCRIPT), str(spec.container_config_path)])
-    if setup_only:
-        command.append("--setup-only")
-    if override_command is not None:
-        command.append("--")
-        command.extend(override_command)
-
-    print(f"[container] running {spec.name} in {image_tag}")
-    completed = subprocess.run(command, check=False)
-    return completed.returncode
+    command.extend(["bash", "-lc", "trap 'exit 0' TERM INT; while true; do sleep 3600; done"])
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
 
 
-def image_exists(image_tag: str) -> bool:
+def inspect_container(container_name: str) -> dict[str, str] | None:
     completed = subprocess.run(
-        ["docker", "image", "inspect", image_tag],
+        [
+            "docker",
+            "inspect",
+            "-f",
+            "{{.State.Status}}\t{{.Image}}",
+            container_name,
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return None
+    state, image_ref = completed.stdout.strip().split("\t", 1)
+    return {"state": state, "image_id": image_ref}
+
+
+def image_id(image_tag: str) -> str | None:
+    completed = subprocess.run(
+        ["docker", "image", "inspect", "-f", "{{.Id}}", image_tag],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return None
+    value = completed.stdout.strip()
+    return value or None
+
+
+def remove_container(spec) -> None:
+    subprocess.run(
+        ["docker", "rm", "-f", container_name_for_spec(spec)],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         check=False,
     )
-    return completed.returncode == 0
+
+
+def stop_container(spec) -> None:
+    container_name = container_name_for_spec(spec)
+    subprocess.run(
+        ["docker", "rm", "-f", container_name],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    print(f"[container] stopped {container_name}")
+
+
+def container_name_for_spec(spec) -> str:
+    return f"researchtree-{spec.slug}"
 
 
 def sync_workspace(spec, *, image_tag: str, workspace_volume: str) -> None:
@@ -321,6 +468,29 @@ def _normalize_override_command(raw: list[str]) -> list[str] | None:
     if not raw:
         return None
     return raw
+
+
+def _treegit_override_command(spec, raw_args: list[str]) -> list[str]:
+    treegit_args = _normalize_override_command(raw_args) or ["--help"]
+    source_dir = spec.example_dir / "src"
+    if not source_dir.is_dir():
+        raise FileNotFoundError(f"Example {spec.example_dir} does not contain a src/ directory for treegit")
+    container_source_dir = spec.container_example_dir / "src"
+    quoted_args = " ".join(shlex.quote(part) for part in treegit_args)
+    command = f"cd {shlex.quote(str(container_source_dir))} && exec treegit {quoted_args}"
+    return ["bash", "-lc", command]
+
+
+def _normalize_treegit_args(raw_args: list[str]) -> tuple[list[str], bool]:
+    args = _normalize_override_command(raw_args) or []
+    fresh = False
+    filtered: list[str] = []
+    for arg in args:
+        if arg == "--fresh":
+            fresh = True
+            continue
+        filtered.append(arg)
+    return filtered, fresh
 
 
 def _add_example_argument(parser: argparse.ArgumentParser) -> None:
