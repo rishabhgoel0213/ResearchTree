@@ -149,16 +149,7 @@ def build_image(spec, *, image_tag: str, rebuild: bool) -> None:
         print(f"[container] using existing image {image_tag}")
         return
 
-    command = [
-        "docker",
-        "build",
-        "-f",
-        str(DOCKERFILE),
-        "-t",
-        image_tag,
-        "--build-arg",
-        f"BASE_IMAGE={spec.image.base}",
-    ]
+    command = _docker_build_command(image_tag=image_tag, base_image=spec.image.base)
     if spec.image.platform:
         command.extend(["--platform", spec.image.platform])
     if spec.image.system_packages:
@@ -166,6 +157,57 @@ def build_image(spec, *, image_tag: str, rebuild: bool) -> None:
     command.append(str(REPO_ROOT))
     print(f"[container] building {image_tag}")
     subprocess.run(command, check=True)
+    if not image_exists(image_tag):
+        raise RuntimeError(
+            "Docker reported a successful build, but the tagged image is not available to `docker run`. "
+            "This usually means the active builder kept the result in cache only. "
+            "Use a buildx builder with `--load`, or switch to a builder that exports to the local image store."
+        )
+
+
+def _docker_build_command(*, image_tag: str, base_image: str) -> list[str]:
+    command = ["docker"]
+    if _has_docker_buildx():
+        command.extend(["buildx", "build", "--load"])
+    else:
+        command.append("build")
+    command.extend(
+        [
+            "-f",
+            str(DOCKERFILE),
+            "-t",
+            image_tag,
+            "--build-arg",
+            f"BASE_IMAGE={base_image}",
+        ]
+    )
+    return command
+
+
+def _has_docker_buildx() -> bool:
+    completed = subprocess.run(
+        ["docker", "buildx", "version"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return completed.returncode == 0
+
+
+def _docker_is_rootless() -> bool:
+    completed = subprocess.run(
+        ["docker", "info", "--format", "{{json .SecurityOptions}}"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return False
+    try:
+        security_options = json.loads(completed.stdout.strip() or "[]")
+    except json.JSONDecodeError:
+        return False
+    return any(option == "name=rootless" for option in security_options)
 
 
 def run_container(
@@ -259,7 +301,8 @@ def create_container(spec, *, image_tag: str, container_name: str) -> None:
     if HOST_CODEX_DIR.exists():
         command.extend(["-v", f"{HOST_CODEX_DIR}:/home/researchtree/.codex"])
     command.extend(["-w", str(WORKSPACE_ROOT)])
-    command.extend(["--user", f"{os.getuid()}:{os.getgid()}"])
+    if not _docker_is_rootless():
+        command.extend(["--user", f"{os.getuid()}:{os.getgid()}"])
 
     home_env = {
         "HOME": "/home/researchtree",
