@@ -15,6 +15,10 @@
     "command": [
       "python3",
       "../../../../treegit/src/treegit/policies/codex.py",
+      "--model",
+      "gpt-5.4",
+      "--reasoning-effort",
+      "medium",
       "--tmux",
       "--tmux-session-prefix",
       "pg-mcts",

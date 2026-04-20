@@ -28,6 +28,10 @@ RUN apt-get update \
         ${SYSTEM_PACKAGES} \
     && rm -rf /var/lib/apt/lists/*
 
+RUN python3 -m pip install --no-cache-dir \
+        requests \
+        uv
+
 RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && npm install -g ${CODEX_NPM_SPEC} \
