@@ -408,13 +408,34 @@ def sync_workspace(spec, *, image_tag: str, workspace_volume: str) -> None:
 
 def add_repo_to_tar(tar: tarfile.TarFile, spec) -> None:
     excluded_roots = {spec.resolve_host_mount_source(mount) for mount in spec.runtime.mounts}
+    _add_tree_to_tar(
+        tar,
+        source_root=REPO_ROOT,
+        arc_root=Path("."),
+        excluded_roots=excluded_roots,
+    )
+    if _relative_to_repo(spec.example_dir) is None:
+        _add_tree_to_tar(
+            tar,
+            source_root=spec.example_dir,
+            arc_root=spec.example_rel,
+            excluded_roots=excluded_roots,
+        )
 
+
+def _add_tree_to_tar(
+    tar: tarfile.TarFile,
+    *,
+    source_root: Path,
+    arc_root: Path,
+    excluded_roots: set[Path],
+) -> None:
     def is_excluded(path: Path) -> bool:
-        if path == REPO_ROOT:
+        if path == source_root:
             return False
         if path.name == ".DS_Store":
             return True
-        relative_parts = path.relative_to(REPO_ROOT).parts
+        relative_parts = path.relative_to(source_root).parts
         if any(part in TRANSIENT_DIR_NAMES for part in relative_parts):
             return True
         for excluded_root in excluded_roots:
@@ -422,17 +443,24 @@ def add_repo_to_tar(tar: tarfile.TarFile, spec) -> None:
                 return True
         return False
 
-    for root, dirs, files in os.walk(REPO_ROOT, topdown=True):
+    for root, dirs, files in os.walk(source_root, topdown=True):
         root_path = Path(root)
         dirs[:] = [name for name in dirs if not is_excluded(root_path / name)]
-        rel_root = root_path.relative_to(REPO_ROOT)
+        rel_root = root_path.relative_to(source_root)
         if rel_root != Path("."):
-            tar.add(root_path, arcname=str(rel_root), recursive=False)
+            tar.add(root_path, arcname=str(arc_root / rel_root), recursive=False)
         for file_name in files:
             file_path = root_path / file_name
             if is_excluded(file_path):
                 continue
-            tar.add(file_path, arcname=str(file_path.relative_to(REPO_ROOT)), recursive=False)
+            tar.add(file_path, arcname=str(arc_root / file_path.relative_to(source_root)), recursive=False)
+
+
+def _relative_to_repo(path: Path) -> Path | None:
+    try:
+        return path.relative_to(REPO_ROOT)
+    except ValueError:
+        return None
 
 
 def ensure_volume_permissions(spec, *, image_tag: str, volume_name: str) -> None:

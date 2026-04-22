@@ -61,7 +61,10 @@ class ContainerSpec:
 
     @property
     def example_rel(self) -> Path:
-        return self.example_dir.relative_to(self.repo_root)
+        relative = _relative_to(self.example_dir, self.repo_root)
+        if relative is not None:
+            return relative
+        return Path(".external") / self.slug
 
     @property
     def slug(self) -> str:
@@ -69,7 +72,10 @@ class ContainerSpec:
 
     @property
     def container_config_path(self) -> Path:
-        return WORKSPACE_ROOT / self.config_path.relative_to(self.repo_root)
+        relative = _relative_to(self.config_path, self.repo_root)
+        if relative is not None:
+            return WORKSPACE_ROOT / relative
+        return self.container_example_dir / self.config_path.name
 
     @property
     def container_example_dir(self) -> Path:
@@ -167,6 +173,13 @@ def resolve_example_config(example: str, repo_root: Path) -> Path:
     if not candidate.exists():
         raise FileNotFoundError(f"Could not find container.toml for {example!r} under {candidate}")
     return candidate
+
+
+def _relative_to(path: Path, root: Path) -> Path | None:
+    try:
+        return path.relative_to(root)
+    except ValueError:
+        return None
 
 
 def default_command(spec: ContainerSpec) -> list[str]:
