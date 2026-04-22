@@ -14,8 +14,11 @@ examples/parameter_golf/data/docs_selected.jsonl
 examples/parameter_golf/data/docs_selected.source_manifest.json
 examples/parameter_golf/data/__pycache__/
 /__pycache__/
+/tests/__pycache__/
 /data/
 /.pixi/
+/.venv/
+/.codex
 /.container/
 .DS_Store
 examples/parameter_golf/.container_state/
