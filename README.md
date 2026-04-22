@@ -48,11 +48,19 @@ The runnable examples in this repo live under `examples/`. Start there for the s
 
 ## Containers
 
-This repo includes a first-pass container workflow driven by a `container.toml` in each example directory.
+This repo includes a first-pass example runtime workflow driven by a `container.toml` in each example directory.
 
 - shared image logic lives in `docker/Dockerfile`
-- the host-side launcher lives in `scripts/container.py` (nix is also supported using `scripts/container_nix.py`)
+- the Docker launcher lives in `scripts/container.py`
+- a parallel Nix launcher lives in `scripts/container_nix.py`
 - each example declares its runtime in `examples/*/container.toml`
+
+The two launchers share the same `container.toml` format but differ in how isolated the workspace is:
+
+- `scripts/container.py` uses Docker/Podman-managed workspaces and volumes
+- `scripts/container_nix.py` uses a persistent copied workspace under `~/.cache/researchtree-container-nix/` and runs commands in a Nix shell
+- both support the same high-level entrypoints such as `build`, `run`, `shell`, and `treegit`
+- both can target either an example name under `examples/` or an arbitrary directory path containing a valid `container.toml`
 
 The current model is intentionally simple:
 
@@ -91,6 +99,25 @@ python3 scripts/container.py run parameter_golf --setup-only
 ```
 
 The container workspace is disposable and isolated from the host checkout, so generated `.treegit/`, worktrees, artifacts, and similar churn stay inside Docker-managed volumes instead of showing up in the base repository.
+
+For a Nix-backed workflow with the same `container.toml`, use the parallel launcher:
+
+```bash
+python3 scripts/container_nix.py build synthetic_regression
+python3 scripts/container_nix.py shell synthetic_regression
+```
+
+To run a single MCTS step in Parameter Golf from a fresh staged workspace:
+
+```bash
+python3 scripts/container.py treegit parameter_golf init
+python3 scripts/container.py treegit parameter_golf commit -m "baseline snapshot"
+python3 scripts/container.py treegit parameter_golf mcts init --config ../mcts/smoke.json
+python3 scripts/container.py treegit parameter_golf mcts step
+python3 scripts/container.py treegit parameter_golf mcts best
+```
+
+The same flow also works with `scripts/container_nix.py treegit ...` if you want the Nix-backed path instead of Docker.
 
 The checked-in example configs pin `platform = "linux/amd64"` because the current Pixi manifests target `linux-64`.
 
