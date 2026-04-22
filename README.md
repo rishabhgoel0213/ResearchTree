@@ -73,6 +73,15 @@ The current model is intentionally simple:
 - Python/package dependencies still come from each example's `pixi.toml`
 - example-local setup hooks such as `pixi run download-data` come from `container.toml`
 
+Before using the launchers, create the local helper virtualenv once and activate it:
+
+```bash
+python3 setup.py
+source .venv/bin/activate
+```
+
+That environment is used for repo helper scripts such as `scripts/container.py` and `scripts/container_nix.py`.
+
 Build the image for an example:
 
 ```bash
