@@ -2,9 +2,7 @@
 
 ResearchTree is a framework for systematically exploring and improving AI research ideas through structured search and experimentation.
 
-The immediate use case in this repository is OpenAI's Parameter Golf challenge: start from a known baseline, generate modified descendants with TreeGit, score them with a consistent local proxy, and keep artifacts and worktrees organized enough to run many iterations.
-
-The goal is not just to train one model once. The goal is to support repeated search over code changes:
+The goal is not just to make one improvement to a codebase. The goal is to support repeated search over code changes:
 
 - keep a baseline source tree that acts as the search root
 - spin out candidate worktrees
@@ -13,7 +11,7 @@ The goal is not just to train one model once. The goal is to support repeated se
 
 ## Layout
 
-- [`examples/parameter_golf/`](examples/parameter_golf/): end-to-end example of this workflow for Parameter Golf
+- [`examples/parameter_golf/`](examples/parameter_golf/): end-to-end example of this workflow for OpenAI's Parameter Golf challenge
 - [`examples/synthetic_regression/`](examples/synthetic_regression/): fast synthetic example for cheap search iterations
 - [`treegit/`](treegit/): TreeGit checkout used to manage search branches and worktrees
 
@@ -50,10 +48,10 @@ The runnable examples in this repo live under `examples/`. Start there for the s
 
 ## Containers
 
-This repo now includes a first-pass container workflow driven by a `container.toml` in each example directory.
+This repo includes a first-pass container workflow driven by a `container.toml` in each example directory.
 
 - shared image logic lives in `docker/Dockerfile`
-- the host-side launcher lives in `scripts/container.py`
+- the host-side launcher lives in `scripts/container.py` (nix is also supported using `scripts/container_nix.py`)
 - each example declares its runtime in `examples/*/container.toml`
 
 The current model is intentionally simple:
